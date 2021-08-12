@@ -49,7 +49,7 @@ namespace DevBuild_Lab5_2
             {
                 warranty = "No";
             }
-            return $"{_year}\t {_make} {_model,-10}\t  {_price:C0}\t(Ext Warranty?: {warranty})";
+            return $"{_year}\t {_make} {_model,-10}\t  {_price:C0}\tMileage: N/A \t (Ext Warranty?: {warranty})";
         }
     }
     class UsedCar : Car
@@ -63,43 +63,44 @@ namespace DevBuild_Lab5_2
         }
         public override string ToString()
         {
-            return $"{_year}\t {_make} {_model,-10}\t  {_price:C0}\t({_mileage}mi - Previous Owners: {_numberOfOwners})";
+            return $"{_year}\t {_make} {_model,-10}\t  {_price:C0}\tMileage: {_mileage}\t (Previous Owners: {_numberOfOwners})";  //messy code but nicer console output.
         }
     }
 
     class Program
     {
-        static void Menu(List<Car> cars)
+        static void Menu(List<Car> cars)       // Method to display the cars and the menu options.
         {
-            Console.WriteLine("Select a car:");
-            int menuNumber = 1;
+            Console.WriteLine("Current Vehicle Inventory:\n");
+            int carNumber = 1;
             foreach (Car listing in cars)
             {
-                Console.WriteLine($"{menuNumber}. {listing}");
-                menuNumber++;
+                Console.WriteLine($"{carNumber}. {listing}");
+                carNumber++;
             }
-            Console.WriteLine("\nA. Add a car to inventory");
+            Console.WriteLine($"\nSelect a car 1 - {carNumber-1}:");
+            Console.WriteLine("A. Add a car to inventory");
             Console.WriteLine("Q. Quit");
         }
-        //static void SortCars(List<Car> cars)
-        //{
-        //    Car temp;
-        //    for (int i = 0; i < cars.Count-1; i++)
-        //    {
-        //        for (int j = 0; j < cars.Count; j++)
-        //        {
-        //            if (cars[i].GetYear() > cars[j].GetYear())
-        //            {
-        //                temp = cars[i + 1];
-        //                cars[i + 1] = cars[i];
-        //                cars[i] = temp;
-
-        //            }
-        //        }
-        //    }
-        //}
+        static void SortCars(List<Car> cars)   //Added a built-in sort to have some sort of order to the list. Sorted by year.
+        {
+            Car temp;
+            for (int i = 0; i < cars.Count; i++)
+            {
+                for (int j = 0; j < cars.Count -1; j++)
+                {
+                    if (cars[j].GetYear() > cars[j + 1].GetYear())
+                    {
+                        temp = cars[j + 1];
+                        cars[j + 1] = cars[j];
+                        cars[j] = temp;
+                    }
+                }
+            }
+        }
         static void Main(string[] args)
         {
+            // Populate initial data
             List<Car> carInventory = new List<Car>();
             carInventory.Add(new UsedCar(CarMake.Ford, "Mustang", 2001, 3999M, 3, 141289));
             carInventory.Add(new UsedCar(CarMake.Chevrolet, "Corvette", 2011,17999, 1, 78000));
@@ -109,12 +110,12 @@ namespace DevBuild_Lab5_2
             carInventory.Add(new NewCar(CarMake.Ford, "GT", 2021, 500000, true));
             carInventory.Add(new UsedCar(CarMake.Nissan, "Maxima", 2012, 11000, 3, 168000));
 
-
+            // Start the program
             while (true)
             {
-                //SortCars(carInventory);
-                
+                SortCars(carInventory);
                 Menu(carInventory);
+
                 string userInput = Console.ReadLine();
                 if (userInput.ToLower() == "q")
                 {
@@ -125,11 +126,12 @@ namespace DevBuild_Lab5_2
                 {
                     Console.Write("Enter New or Used: ");
                     userInput = Console.ReadLine();
-                    if (userInput.ToLower() == "new")
+
+                    if (userInput.ToLower() == "new")                 // Add a new car
                     {
                         Console.Write("Enter Ford, Chevrolet, Nissan, Ferrari, or AstonMartin: ");
                         userInput = Console.ReadLine();
-                        Enum.TryParse(userInput, out CarMake newCarMake);
+                        Enum.TryParse(userInput, out CarMake make);   //No idea how to error check this. Did not try. If you add A Dodge Ram it becomes a Ford Ram.
                         Console.Write("Enter the Model: ");
                         string model = Console.ReadLine();
                         Console.Write("Enter the year: ");
@@ -147,15 +149,15 @@ namespace DevBuild_Lab5_2
                         {
                             exWarranty = false;
                         }
-                        carInventory.Add(new NewCar(newCarMake, model, year, price, exWarranty));
+                        carInventory.Add(new NewCar(make, model, year, price, exWarranty));
                         Console.WriteLine();
 
                     }
-                    else if (userInput.ToLower() == "used")
+                    else if (userInput.ToLower() == "used")         // Add a used car
                     {
                         Console.Write("Enter Ford, Chevrolet, Nissan, Ferrari, or AstonMartin: ");
                         userInput = Console.ReadLine();
-                        Enum.TryParse(userInput, out CarMake usedCarMake);
+                        Enum.TryParse(userInput, out CarMake make);
                         Console.Write("Enter the Model: ");
                         string model = Console.ReadLine();
                         Console.Write("Enter the year: ");
@@ -166,23 +168,22 @@ namespace DevBuild_Lab5_2
                         int mileage = int.Parse(Console.ReadLine());
                         Console.Write("How many previous owners?: ");
                         int prevOwners = int.Parse(Console.ReadLine());
-                        carInventory.Add(new UsedCar(usedCarMake, model, year, price, prevOwners, mileage));
+                        carInventory.Add(new UsedCar(make, model, year, price, prevOwners, mileage));
                         Console.WriteLine();
-
                     }
                 }
-                else if (userInput.ToLower() != "a" && userInput.ToLower() != "q")
-                {   
-                    int.TryParse(userInput, out int carSelection);
-                
-                    if (carSelection <= carInventory.Count && carSelection > 0)
-                    {
-                        carSelection = int.Parse(userInput) - 1;
-                        Console.WriteLine($"You have selected {carInventory[carSelection]}");
+                else if (userInput.ToLower() != "a" && userInput.ToLower() != "q")    // If user doesn't pick the Add or Quit option
+                {                                                                     // it attempts to select a car
+                    int.TryParse(userInput, out int carSelection);                 
+                                                                                   
+                    if (carSelection <= carInventory.Count && carSelection > 0)       // If a number outside the range, or a letter besides Q or A is entered
+                    {                                                                 // the menu just reloads.
+                        carSelection = int.Parse(userInput) - 1;                      // Line up the user's selection with the indexing of the car list
+                        Console.WriteLine($"You have selected: {carInventory[carSelection]}");
                         Console.WriteLine("Purchase? (y/n): ");
                         if (Console.ReadLine() == "y")
                         {
-                            carInventory.Remove(carInventory[carSelection]);
+                            carInventory.Remove(carInventory[carSelection]);          // Sell and remove the car
                         }
                     }
                 }
